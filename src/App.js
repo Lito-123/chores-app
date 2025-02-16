@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   Button, TextField, Typography, Container, Box, Card, CardContent,
-  Grid, IconButton, Divider, Fab
+  Grid, IconButton, Divider, Fab, Paper, Switch, FormControlLabel
 } from '@mui/material';
 import { Delete as DeleteIcon, CheckCircle as CheckCircleIcon, Add as AddIcon } from '@mui/icons-material';
 import { grey } from '@mui/material/colors';
@@ -11,6 +11,7 @@ function App() {
   const [chores, setChores] = useState([]);
   const [completedChores, setCompletedChores] = useState([]);
   const [newChore, setNewChore] = useState('');
+  const [filter, setFilter] = useState('all'); // To filter tasks
 
   useEffect(() => {
     axios.get('http://localhost:5001/chores')
@@ -26,14 +27,15 @@ function App() {
   }, []);
 
   const handleAddChore = () => {
-    if (newChore.trim() === '') return;
+    if (newChore.trim() === '') return; // Don't add an empty task
 
     const choreToAdd = { name: newChore, completed: false };
 
     axios.post('http://localhost:5001/chores', choreToAdd)
       .then((response) => {
+        // Add the newly added chore to the list of incomplete chores
         setChores([response.data, ...chores]);
-        setNewChore('');
+        setNewChore(''); // Clear the input field after adding
       })
       .catch((error) => {
         console.error('Error adding new chore!', error);
@@ -72,9 +74,14 @@ function App() {
     return date.toLocaleString(); // Format it to a readable string like "2/16/2025, 10:45:30 AM"
   };
 
+  // Filter chores based on selected filter
+  const filteredChores = (filter === 'all') 
+    ? [...chores, ...completedChores] 
+    : (filter === 'open' ? chores : completedChores);
+
   return (
     <Container maxWidth="sm" sx={{
-      mt: 0,
+      mt: 4,
       backgroundColor: 'white',
       padding: 3,
       borderRadius: 5,
@@ -84,84 +91,84 @@ function App() {
       alignItems: 'center',
     }}>
       <Typography variant="h4" gutterBottom align="center" color="primary" sx={{ fontWeight: 'bold' }}>
-        Chores Tracker
+        Today’s Tasks
       </Typography>
 
-      {/* Add Chore Input */}
-      <Box display="flex" flexDirection="column" alignItems="center" mb={3}>
+      {/* Date Display */}
+      <Typography variant="subtitle1" gutterBottom align="center" sx={{ color: grey[600] }}>
+        Wednesday, 11 May
+      </Typography>
+
+      {/* New Task Input and Button */}
+      <Box display="flex" flexDirection="column" alignItems="center" mb={3} width="100%">
+        {/* Text input for new chore */}
         <TextField
-          label="New Chore"
+          fullWidth
+          label="New Task"
           variant="outlined"
-          fullWidth
           value={newChore}
-          onChange={(e) => setNewChore(e.target.value)}
-          sx={{
-            mb: 2,
-            borderRadius: 3,
-            backgroundColor: grey[100],
-            '&:hover': { backgroundColor: grey[200] },
-            '& .MuiOutlinedInput-root': {
-              '& fieldset': {
-                borderColor: grey[400],
-              },
-            },
-          }}
+          onChange={(e) => setNewChore(e.target.value)} // Update the state as the user types
+          sx={{ marginBottom: 2 }}
         />
-        <Button
-          onClick={handleAddChore}
-          variant="contained"
-          color="primary"
-          fullWidth
-          sx={{
-            height: '48px',
-            borderRadius: 3,
-            backgroundColor: '#FF6F61', // Light coral tint
-            '&:hover': {
-              backgroundColor: '#FF4C3B',
-            },
-          }}
-        >
-          Add Chore
-        </Button>
+        {/* New Task Button */}
+        <Fab color="primary" onClick={handleAddChore}>
+          <AddIcon />
+        </Fab>
       </Box>
 
-      {/* Incomplete Chores Section */}
-      <Typography variant="h6" gutterBottom color="primary" sx={{ fontWeight: 'bold' }}>
-        Incomplete Chores
-      </Typography>
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        {chores.map((chore) => (
-          <Grid item xs={12} key={chore.id}>
-            <Card sx={{
-              boxShadow: 3,
-              backdropFilter: 'blur(10px)',
-              backgroundColor: 'rgba(255, 255, 255, 0.5)', // Glassmorphism effect
-              borderRadius: 3,
-              transition: 'transform 0.3s',
-              '&:hover': { transform: 'scale(1.05)', backgroundColor: 'rgba(255, 255, 255, 0.8)' },
-              padding: 2,
-            }}>
-              <CardContent>
-                <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333' }}>
-                  {chore.name}
-                </Typography>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
-                  <Button
-                    variant="contained"
-                    color="success"
-                    size="small"
-                    startIcon={<CheckCircleIcon />}
-                    onClick={() => handleCompleteChore(chore.id)}
-                    sx={{
-                      borderRadius: 3,
-                      backgroundColor: '#28a745',
-                      '&:hover': {
-                        backgroundColor: '#218838',
-                      },
-                    }}
-                  >
-                    Complete
-                  </Button>
+   {/* Filter Switch */}
+<Box display="flex" justifyContent="center" mb={2}>
+  <FormControlLabel
+    control={
+      <Switch
+        checked={filter === 'completed'} // Check if the filter is set to 'completed'
+        onChange={() => setFilter(filter === 'completed' ? 'open' : 'completed')} // Toggle between 'open' and 'completed'
+      />
+    }
+    label={filter === 'completed' ? 'Show Open Tasks' : 'Show Completed Tasks'} // Change label based on the filter
+  />
+</Box>
+
+
+      {/* Task List */}
+      <Box width="100%" sx={{ mb: 4 }}>
+        {filteredChores.map((chore) => (
+          <Card key={chore.id} sx={{
+            boxShadow: 3,
+            backdropFilter: 'blur(10px)',
+            backgroundColor: 'rgba(255, 255, 255, 0.5)',
+            borderRadius: 3,
+            transition: 'transform 0.3s',
+            '&:hover': { transform: 'scale(1.05)', backgroundColor: 'rgba(255, 255, 255, 0.8)' },
+            padding: 2,
+            marginBottom: 2,
+          }}>
+            <CardContent>
+              <Typography variant="h6" sx={{
+                textDecoration: chore.completed ? 'line-through' : 'none',
+                color: chore.completed ? grey[500] : 'inherit',
+              }}>
+                {chore.name}
+              </Typography>
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                {chore.completed && (
+                  <Typography variant="body2" color="textSecondary">
+                    Completed on: {formatTimestamp(chore.completedAt)}
+                  </Typography>
+                )}
+                <Box>
+                  {!chore.completed && (
+                    <Button
+                      variant="contained"
+                      color="success"
+                      size="small"
+                      startIcon={<CheckCircleIcon />}
+                      onClick={() => handleCompleteChore(chore.id)}
+                      sx={{ borderRadius: 3, backgroundColor: '#28a745' }}
+                    >
+                      Complete
+                    </Button>
+                  )}
                   <IconButton
                     color="error"
                     onClick={() => handleDeleteChore(chore.id)}
@@ -170,44 +177,11 @@ function App() {
                     <DeleteIcon />
                   </IconButton>
                 </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+              </Box>
+            </CardContent>
+          </Card>
         ))}
-      </Grid>
-
-      <Divider sx={{ my: 3 }} />
-
-      {/* Completed Chores Section */}
-      <Typography variant="h6" gutterBottom color="secondary" sx={{ fontWeight: 'bold' }}>
-        Completed Chores
-      </Typography>
-      <Grid container spacing={3}>
-        {completedChores.map((chore) => (
-          <Grid item xs={12} key={chore.id}>
-            <Card sx={{
-              backdropFilter: 'blur(10px)',
-              backgroundColor: 'rgba(255, 255, 255, 0.5)', // Glassmorphism effect
-              borderRadius: 3,
-              boxShadow: 3,
-              padding: 2,
-            }}>
-              <CardContent>
-                <Typography variant="h6" sx={{
-                  textDecoration: 'line-through',
-                  color: grey[500],
-                  fontWeight: 'bold',
-                }}>
-                  {chore.name}
-                </Typography>
-                <Typography variant="body2" color="textSecondary" mt={1}>
-                  Completed on: {formatTimestamp(chore.completedAt)}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+      </Box>
     </Container>
   );
 }
