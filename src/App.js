@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Button, TextField, Typography, Container, Box, Card, CardContent, Grid, IconButton, Divider } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import {
+  Button, TextField, Typography, Container, Box, Card, CardContent,
+  Grid, IconButton, Divider, Fab
+} from '@mui/material';
+import { Delete as DeleteIcon, CheckCircle as CheckCircleIcon, Add as AddIcon } from '@mui/icons-material';
 import { grey } from '@mui/material/colors';
 
 function App() {
@@ -26,14 +28,12 @@ function App() {
   const handleAddChore = () => {
     if (newChore.trim() === '') return;
 
-    // Prepare the new chore with completed: false
     const choreToAdd = { name: newChore, completed: false };
 
-    // Add the new chore to the database
     axios.post('http://localhost:5001/chores', choreToAdd)
       .then((response) => {
         setChores([response.data, ...chores]);
-        setNewChore(''); // Clear the input field
+        setNewChore('');
       })
       .catch((error) => {
         console.error('Error adding new chore!', error);
@@ -46,7 +46,7 @@ function App() {
         const updatedChores = chores.filter(chore => chore.id !== id);
         const completedChore = chores.find(chore => chore.id === id);
         completedChore.completed = true;
-        completedChore.completedAt = response.data.completedAt;  // Capture the timestamp from the response
+        completedChore.completedAt = response.data.completedAt;
 
         setChores(updatedChores);
         setCompletedChores([completedChore, ...completedChores]);
@@ -73,50 +73,92 @@ function App() {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Typography variant="h3" gutterBottom align="center" color="primary">
+    <Container maxWidth="sm" sx={{
+      mt: 0,
+      backgroundColor: 'white',
+      padding: 3,
+      borderRadius: 5,
+      boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+    }}>
+      <Typography variant="h4" gutterBottom align="center" color="primary" sx={{ fontWeight: 'bold' }}>
         Chores Tracker
       </Typography>
 
       {/* Add Chore Input */}
-      <Box display="flex" justifyContent="center" mb={3}>
+      <Box display="flex" flexDirection="column" alignItems="center" mb={3}>
         <TextField
           label="New Chore"
           variant="outlined"
           fullWidth
           value={newChore}
           onChange={(e) => setNewChore(e.target.value)}
-          sx={{ mr: 2 }}
+          sx={{
+            mb: 2,
+            borderRadius: 3,
+            backgroundColor: grey[100],
+            '&:hover': { backgroundColor: grey[200] },
+            '& .MuiOutlinedInput-root': {
+              '& fieldset': {
+                borderColor: grey[400],
+              },
+            },
+          }}
         />
         <Button
           onClick={handleAddChore}
           variant="contained"
           color="primary"
-          sx={{ height: '100%' }}
+          fullWidth
+          sx={{
+            height: '48px',
+            borderRadius: 3,
+            backgroundColor: '#FF6F61', // Light coral tint
+            '&:hover': {
+              backgroundColor: '#FF4C3B',
+            },
+          }}
         >
           Add Chore
         </Button>
       </Box>
 
       {/* Incomplete Chores Section */}
-      <Typography variant="h5" gutterBottom color="primary">
+      <Typography variant="h6" gutterBottom color="primary" sx={{ fontWeight: 'bold' }}>
         Incomplete Chores
       </Typography>
-      <Grid container spacing={3}>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
         {chores.map((chore) => (
-          <Grid item xs={12} sm={6} md={4} key={chore.id}>
-            <Card sx={{ boxShadow: 3, transition: 'transform 0.3s', '&:hover': { transform: 'scale(1.05)' } }}>
+          <Grid item xs={12} key={chore.id}>
+            <Card sx={{
+              boxShadow: 3,
+              backdropFilter: 'blur(10px)',
+              backgroundColor: 'rgba(255, 255, 255, 0.5)', // Glassmorphism effect
+              borderRadius: 3,
+              transition: 'transform 0.3s',
+              '&:hover': { transform: 'scale(1.05)', backgroundColor: 'rgba(255, 255, 255, 0.8)' },
+              padding: 2,
+            }}>
               <CardContent>
-                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333' }}>
                   {chore.name}
                 </Typography>
-                <Box display="flex" justifyContent="flex-end" mt={2}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
                   <Button
                     variant="contained"
                     color="success"
                     size="small"
                     startIcon={<CheckCircleIcon />}
                     onClick={() => handleCompleteChore(chore.id)}
+                    sx={{
+                      borderRadius: 3,
+                      backgroundColor: '#28a745',
+                      '&:hover': {
+                        backgroundColor: '#218838',
+                      },
+                    }}
                   >
                     Complete
                   </Button>
@@ -134,18 +176,28 @@ function App() {
         ))}
       </Grid>
 
-      <Divider sx={{ my: 5 }} />
+      <Divider sx={{ my: 3 }} />
 
       {/* Completed Chores Section */}
-      <Typography variant="h5" gutterBottom color="secondary">
+      <Typography variant="h6" gutterBottom color="secondary" sx={{ fontWeight: 'bold' }}>
         Completed Chores
       </Typography>
       <Grid container spacing={3}>
         {completedChores.map((chore) => (
-          <Grid item xs={12} sm={6} md={4} key={chore.id}>
-            <Card sx={{ backgroundColor: grey[100], boxShadow: 3 }}>
+          <Grid item xs={12} key={chore.id}>
+            <Card sx={{
+              backdropFilter: 'blur(10px)',
+              backgroundColor: 'rgba(255, 255, 255, 0.5)', // Glassmorphism effect
+              borderRadius: 3,
+              boxShadow: 3,
+              padding: 2,
+            }}>
               <CardContent>
-                <Typography variant="h6" sx={{ textDecoration: 'line-through', color: grey[500] }}>
+                <Typography variant="h6" sx={{
+                  textDecoration: 'line-through',
+                  color: grey[500],
+                  fontWeight: 'bold',
+                }}>
                   {chore.name}
                 </Typography>
                 <Typography variant="body2" color="textSecondary" mt={1}>
