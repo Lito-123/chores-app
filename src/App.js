@@ -81,7 +81,7 @@ function App() {
 
   return (
     <Container maxWidth="sm" sx={{
-      mt: 4,
+      mt: 0,
       backgroundColor: 'white',
       padding: 3,
       borderRadius: 5,
